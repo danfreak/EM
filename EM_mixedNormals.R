@@ -1,4 +1,4 @@
-setwd("~/Google Drive/Universita/R/scripts/biomasse_ce/data_analysis/EM")
+#setwd("~/Google Drive/Universita/R/scripts/biomasse_ce/data_analysis/EM")
 library('randtoolbox') #for halton draws
 #get execution time
 totalTime <- proc.time()
@@ -23,12 +23,12 @@ EMData<-EMData[1:(nobs*options*cset),]
 #--------------------------------
 # DEFINE NEEDED values
 #--------------------------------
-nIter = 2 #set number of iterations
+nIter = 20 #set number of iterations
 R = 10 #number of draws per person
 options=4 # num of choice alternatives per choice set
 cset <- 6 #number of choice sets per person
 
-nobs=5 #total number of persons (subjects) in dataset
+nobs=20 #total number of persons (subjects) in dataset
 dim=9; #dimension of simulated data  (betas)
 k=2  #number of "true" components of mixed normals
 
@@ -107,9 +107,9 @@ while(Iter <= nIter && converged!=TRUE){
     #make drwas for subject
     for (i in 1:(k*dim)){
       #Bi <-parMeans[i] + rnorm(R, 0, 1)
-      #Bi <-rnorm(R, parMeans[i], sqrt(parCov_trans[[Iter+1]][i])
+      Bi <-parMeans[i] + parCov_trans[[1]][i]*rnorm(R, 0, 1)
         
-      Bi<-parMeans[i] + parCov_trans[[Iter+1]][i]*Hseq[,i]
+      #Bi<-parMeans[i] + parCov_trans[[1]][i]*Hseq[,i] #halton draws
       ParMatrix[,i] <-Bi
     }
     totalPar[parStart:parEnd,] <-ParMatrix
@@ -130,7 +130,6 @@ while(Iter <= nIter && converged!=TRUE){
         resData[Rcounter,paste("K", Kn, sep="")] <-calcK(WM, Kn)
       }
     }
-    #Pn<-
   }
   resData[,"den"]<-(resData[,4:(4+k-1)]%*%Sc)/R
   for(Kn in 1:k){
@@ -154,9 +153,9 @@ while(Iter <= nIter && converged!=TRUE){
       parMeans[mStart:mEnd] <- apply(totalPar[, mStart:mEnd] * resData[,paste("h", Kn, sep="")],2,sum)/sum(resData[,paste("h", Kn, sep="")])
       Bdiff <-totalPar[, mStart:mEnd] - parMeans[mStart:mEnd]
       if(Kn==1){
-        parCov1<-cov(Bdiff* resData[,paste("h", Kn, sep="")]/sum(resData[,paste("h", Kn, sep="")]))
+        parCov1<-(Bdiff%o%Bdiff)* resData[,paste("h", Kn, sep="")]/sum(resData[,paste("h", Kn, sep="")])
       }else{
-        parCov2<-cov(Bdiff* resData[,paste("h", Kn, sep="")]/sum(resData[,paste("h", Kn, sep="")]))
+        parCov2<-(Bdiff%o%Bdiff)* resData[,paste("h", Kn, sep="")]/sum(resData[,paste("h", Kn, sep="")])
       }
       #parCov<-apply((Bdiff*I(Bdiff)) * resData[,paste("h", Kn, sep="")],2,sum)/sum(resData[,paste("h", Kn, sep="")])
       #pippo<- cov.wt(totalPar[, mStart:mEnd], resData[,paste("h", Kn, sep="")], method = "ML", cor = TRUE)
@@ -164,7 +163,7 @@ while(Iter <= nIter && converged!=TRUE){
       #parCov_trans[Kn]<- apply((Bdiff*I(Bdiff)) * resData[,paste("h", Kn, sep="")],2,sum)/sum(resData[,paste("h", Kn, sep="")])
     
     }
-    parCov_trans[[Iter+2]] <-c(parCov1, parCov2)
+    parCov_trans[[1]] <-c(parCov1, parCov2)
     #parCov_trans[[Iter+2]] <-c(pCov[[1]], pCov[[2]])
     #storedParMeans<-rbind(storedParMeans, parMeans)
   
